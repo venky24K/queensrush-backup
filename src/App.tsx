@@ -16,6 +16,7 @@ import AchievementsScreen from './screens/AchievementsScreen';
 import ScreenTransition from './components/ScreenTransition';
 import { GameParams, AppScreen } from './types/game';
 import { ThemeProvider } from './theme/ThemeContext';
+import { SettingsProvider } from './theme/SettingsContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -75,38 +76,40 @@ export default function App() {
   };
 
   return (
-    <ThemeProvider>
-      {currentScreen === 'lobby' && (
-        <ScreenTransition key="lobby">
-          <LobbyScreen onNavigate={handleNavigate} />
-        </ScreenTransition>
-      )}
-      {currentScreen === 'game-mode' && (
-        <ScreenTransition key="game-mode">
-          <GameModeScreen onNavigate={handleNavigate} onStartGame={handleStartGame} />
-        </ScreenTransition>
-      )}
-      {currentScreen === 'rules' && (
-        <ScreenTransition key="rules">
-          <RulesScreen onNavigate={handleNavigate} />
-        </ScreenTransition>
-      )}
-      {currentScreen === 'game' && (
-        <ScreenTransition key="game">
-          <GameScene gameParams={gameParams} onNavigate={handleNavigate} />
-        </ScreenTransition>
-      )}
-      {currentScreen === 'settings' && (
-        <ScreenTransition key="settings">
-          <SettingsScreen onNavigate={handleNavigate} />
-        </ScreenTransition>
-      )}
-      {currentScreen === 'achievements' && (
-        <ScreenTransition key="achievements">
-          <AchievementsScreen onNavigate={handleNavigate} />
-        </ScreenTransition>
-      )}
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SettingsProvider>
+      <ThemeProvider>
+        {currentScreen === 'lobby' && (
+          <ScreenTransition key="lobby">
+            <LobbyScreen onNavigate={handleNavigate} />
+          </ScreenTransition>
+        )}
+        {currentScreen === 'game-mode' && (
+          <ScreenTransition key="game-mode">
+            <GameModeScreen onNavigate={handleNavigate} onStartGame={handleStartGame} />
+          </ScreenTransition>
+        )}
+        {currentScreen === 'rules' && (
+          <ScreenTransition key="rules">
+            <RulesScreen onNavigate={handleNavigate} />
+          </ScreenTransition>
+        )}
+        {currentScreen === 'game' && (
+          <ScreenTransition key="game">
+            <GameScene gameParams={gameParams} onNavigate={handleNavigate} />
+          </ScreenTransition>
+        )}
+        {currentScreen === 'settings' && (
+          <ScreenTransition key="settings">
+            <SettingsScreen onNavigate={handleNavigate} />
+          </ScreenTransition>
+        )}
+        {currentScreen === 'achievements' && (
+          <ScreenTransition key="achievements">
+            <AchievementsScreen onNavigate={handleNavigate} />
+          </ScreenTransition>
+        )}
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </SettingsProvider>
   );
 }

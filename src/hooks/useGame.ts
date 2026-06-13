@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import * as Haptics from 'expo-haptics';
+import { useState, useEffect, useRef } from 'react';
 import { BoardSize, PlacedQueen } from '../types/board';
 import { GameMode, Difficulty, TimerOption, GameState, TurnState } from '../types/game';
+import * as ExpoHaptics from 'expo-haptics';
+import { useSettings } from '../theme/SettingsContext';
 import { useBoard } from './useBoard';
 import { QUOTAS, TIMERS, BOT_DELAYS } from '../utils/constants';
 
@@ -14,8 +15,11 @@ interface UseGameProps {
 
 export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGameProps) {
   const { checkConflict: checkBoardConflict, hasValidMoves: hasBoardValidMoves, getBotMove } = useBoard(boardSize);
+  const { playHaptic, playNotificationHaptic } = useSettings();
 
   const [placedQueens, setPlacedQueens] = useState<PlacedQueen[]>([]);
+  const placedQueensRef = useRef(placedQueens);
+  placedQueensRef.current = placedQueens;
   const [gameState, setGameState] = useState<GameState>('playing');
   const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(1);
   const [isPaused, setIsPaused] = useState(false);
@@ -41,13 +45,13 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
     const isConflict = checkBoardConflict(index, placedIndices);
 
     if (isConflict) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      playNotificationHaptic(ExpoHaptics.NotificationFeedbackType.Error);
       setGameState(currentPlayer === 1 ? 'p1_lost' : 'p2_lost');
       setPlacedQueens((prev) => [...prev, { index, player: currentPlayer }]);
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    playHaptic(ExpoHaptics.ImpactFeedbackStyle.Medium);
     const newPlacedQueens = [...placedQueens, { index, player: currentPlayer }];
     setPlacedQueens(newPlacedQueens);
 
@@ -99,7 +103,8 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
     const delay = BOT_DELAYS[difficulty];
 
     const botTimer = setTimeout(() => {
-      const placedIndices = placedQueens.map((q) => q.index);
+      const currentPlacedQueens = placedQueensRef.current;
+      const placedIndices = currentPlacedQueens.map((q) => q.index);
       const botMove = getBotMove(placedIndices, difficulty);
 
       if (botMove !== -1 && checkBoardConflict(botMove, placedIndices)) {
@@ -112,7 +117,7 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
         setGameState('draw');
       } else {
         const botQueen: PlacedQueen = { index: botMove, player: 2 };
-        const newPlacedQueens: PlacedQueen[] = [...placedQueens, botQueen];
+        const newPlacedQueens: PlacedQueen[] = [...currentPlacedQueens, botQueen];
         setPlacedQueens(newPlacedQueens);
 
         const newIndices = newPlacedQueens.map((q) => q.index);
@@ -133,7 +138,7 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
   }, [currentPlayer, gameState, gameMode, boardSize, placedQueens, difficulty, isPaused, showResignConfirm, quota, checkBoardConflict, getBotMove, hasBoardValidMoves]);
 
   const handleReplay = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    playHaptic(ExpoHaptics.ImpactFeedbackStyle.Heavy);
     setPlacedQueens([]);
     setGameState('playing');
     setCurrentPlayer(1);
@@ -144,12 +149,20 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
   const handleUndo = () => {
     if (isPaused || showResignConfirm || placedQueens.length === 0) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    playHaptic(ExpoHaptics.ImpactFeedbackStyle.Light);
 
-    const lastMove = placedQueens[placedQueens.length - 1];
-
-    setPlacedQueens((prev) => prev.slice(0, -1));
-    setCurrentPlayer(lastMove.player);
+    if (gameMode === 'vs-bot') {
+      if (placedQueens.length >= 2) {
+        setPlacedQueens((prev) => prev.slice(0, -2));
+      } else {
+        setPlacedQueens([]);
+      }
+      setCurrentPlayer(1);
+    } else {
+      const lastMove = placedQueens[placedQueens.length - 1];
+      setPlacedQueens((prev) => prev.slice(0, -1));
+      setCurrentPlayer(lastMove.player);
+    }
     
     setGameState('playing');
     setTimeLeft(maxTime);

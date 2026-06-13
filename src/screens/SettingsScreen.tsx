@@ -1,6 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from '../utils/haptics';
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { useSettings } from '../theme/SettingsContext';
+import React, { useCallback, useMemo } from 'react';
 import {
   Platform,
   Pressable,
@@ -17,20 +16,6 @@ import { BotIcon, ChevronLeftIcon, GearIcon } from '../assets/icons/icons';
 import { AppScreen } from '../types/game';
 import { useTheme, ThemeSetting } from '../theme/ThemeContext';
 
-// ─── Storage keys ──────────────────────────────────────────────────────────────
-const KEYS = {
-  SOUND: '@qr_sound',
-  HAPTICS: '@qr_haptics',
-  BOT_NAME: '@qr_bot_name',
-} as const;
-
-// ─── Defaults ──────────────────────────────────────────────────────────────────
-const DEFAULTS = {
-  sound: true,
-  haptics: true,
-  botName: 'Saara',
-};
-
 // ─── SettingsScreen ────────────────────────────────────────────────────────────
 
 type SettingsScreenProps = {
@@ -41,54 +26,17 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
   const { colors, themeSetting, setThemeSetting } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const [sound, setSound] = useState(DEFAULTS.sound);
-  const [haptics, setHaptics] = useState(DEFAULTS.haptics);
-  const [botName, setBotName] = useState(DEFAULTS.botName);
-  const [loaded, setLoaded] = useState(false);
-
-  // ── Load persisted settings ────────────────────────────────────────────────
-  useEffect(() => {
-    (async () => {
-      try {
-        const [s, h, b] = await Promise.all([
-          AsyncStorage.getItem(KEYS.SOUND),
-          AsyncStorage.getItem(KEYS.HAPTICS),
-          AsyncStorage.getItem(KEYS.BOT_NAME),
-        ]);
-        if (s !== null) setSound(JSON.parse(s));
-        if (h !== null) setHaptics(JSON.parse(h));
-        if (b !== null) setBotName(b);
-      } catch {
-        // Silently use defaults
-      } finally {
-        setLoaded(true);
-      }
-    })();
-  }, []);
-
-  // ── Persist helpers ────────────────────────────────────────────────────────
-  const toggleSound = useCallback(async (v: boolean) => {
-    setSound(v);
-    await AsyncStorage.setItem(KEYS.SOUND, JSON.stringify(v));
-  }, []);
-
-  const toggleHaptics = useCallback(async (v: boolean) => {
-    setHaptics(v);
-    Haptics.setHapticsEnabled(v);
-    if (v) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await AsyncStorage.setItem(KEYS.HAPTICS, JSON.stringify(v));
-  }, []);
+  const { sound, setSound, haptics, setHaptics, botName, setBotName, playHaptic } = useSettings();
 
   const handleBotNameChange = useCallback((text: string) => {
     const trimmed = text.slice(0, 16);
     setBotName(trimmed);
-  }, []);
+  }, [setBotName]);
 
-  const handleBotNameBlur = useCallback(async () => {
-    const name = botName.trim() || DEFAULTS.botName;
+  const handleBotNameBlur = useCallback(() => {
+    const name = botName.trim() || 'Saara';
     setBotName(name);
-    await AsyncStorage.setItem(KEYS.BOT_NAME, name);
-  }, [botName]);
+  }, [botName, setBotName]);
 
 
   // Sub-components utilizing dynamic styles
@@ -137,7 +85,7 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           <View style={styles.header}>
             <Pressable
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                playHaptic();
                 onNavigate('lobby');
               }}
               style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
@@ -159,7 +107,7 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
                     <Pressable
                       key={t}
                       onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        playHaptic();
                         setThemeSetting(t);
                       }}
                       style={[styles.themeBtn, themeSetting === t && styles.themeBtnActive]}
@@ -182,14 +130,14 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
               title="Sound Effects"
               subtitle="Toggle in-game audio feedback"
               value={sound}
-              onValueChange={toggleSound}
+              onValueChange={(v) => setSound(v)}
             />
             <ToggleRow
               icon={<HapticsIcon color={colors.text} />}
               title="Haptic Feedback"
               subtitle="Vibrations on tap and game events"
               value={haptics}
-              onValueChange={toggleHaptics}
+              onValueChange={(v) => setHaptics(v)}
             />
           </View>
 

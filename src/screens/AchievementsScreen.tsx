@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Haptics from '../utils/haptics';
 import {
   ChevronLeftIcon,
   TrophyIcon,
@@ -12,6 +11,7 @@ import {
 } from '../assets/icons/icons';
 import { AppScreen } from '../types/game';
 import { useTheme } from '../theme/ThemeContext';
+import { useSettings } from '../theme/SettingsContext';
 
 type AchievementProps = {
   icon: React.ReactNode;
@@ -52,6 +52,7 @@ type AchievementsScreenProps = {
 
 export default function AchievementsScreen({ onNavigate }: AchievementsScreenProps) {
   const { colors, isDark } = useTheme();
+  const { playHaptic } = useSettings();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   return (
@@ -63,7 +64,7 @@ export default function AchievementsScreen({ onNavigate }: AchievementsScreenPro
           <View style={styles.header}>
             <Pressable
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                playHaptic();
                 onNavigate('lobby');
               }}
               style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}

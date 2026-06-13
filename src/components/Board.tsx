@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import { View, StyleSheet, useWindowDimensions, Platform } from 'react-native';
 import Cell from './Cell';
 import Queen from './Queen';
 import Modal from './Modal';
@@ -15,11 +15,12 @@ type BoardProps = {
 };
 
 const BOARD_PADDING = 12;
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const MAX_BOARD_WIDTH = Math.min(SCREEN_WIDTH - 32, 400);
 
 export default function Board({ size = '8x8', placedQueens = [], onCellPress, isPaused = false, onResume }: BoardProps) {
   const { colors, isDark } = useTheme();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const MAX_BOARD_WIDTH = Math.min(SCREEN_WIDTH - 32, 400);
+
   const cols = size === '8x8' ? 8 : 6;
   const cellsCount = cols * cols;
   const boardInnerWidth = MAX_BOARD_WIDTH - BOARD_PADDING * 2;

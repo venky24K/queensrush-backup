@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
-import * as Haptics from '../utils/haptics';
+import { useSettings } from '../theme/SettingsContext';
 import { useTheme } from '../theme/ThemeContext';
 
 type CellProps = {
@@ -12,9 +12,10 @@ type CellProps = {
 
 export default function Cell({ isDark, onPress, children, size }: CellProps) {
   const { isDark: isDarkTheme } = useTheme();
+  const { playHaptic } = useSettings();
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    playHaptic();
     onPress?.();
   };
 

@@ -1,4 +1,3 @@
-import * as Haptics from '../utils/haptics';
 import React, { ReactNode, useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +5,7 @@ import { Image } from 'expo-image';
 import { BookIcon, ChevronRightIcon, GearIcon, MedalIcon, PlayIcon } from '../assets/icons/icons';
 import { AppScreen } from '../types/game';
 import { useTheme } from '../theme/ThemeContext';
+import { useSettings } from '../theme/SettingsContext';
 
 type MenuCardProps = {
   title: string;
@@ -15,11 +15,12 @@ type MenuCardProps = {
   onPress?: () => void;
   colors: any;
   styles: any;
+  playHaptic: () => void;
 };
 
-function MenuCard({ title, subtitle, icon, primary = false, onPress, colors, styles }: MenuCardProps) {
+function MenuCard({ title, subtitle, icon, primary = false, onPress, colors, styles, playHaptic }: MenuCardProps) {
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    playHaptic();
     onPress?.();
   };
 
@@ -55,6 +56,7 @@ type LobbyScreenProps = {
 
 export default function LobbyScreen({ onNavigate }: LobbyScreenProps) {
   const { colors } = useTheme();
+  const { playHaptic } = useSettings();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -86,6 +88,7 @@ export default function LobbyScreen({ onNavigate }: LobbyScreenProps) {
               onPress={() => onNavigate('game-mode')}
               colors={colors}
               styles={styles}
+              playHaptic={playHaptic}
             />
 
             <MenuCard
@@ -95,6 +98,7 @@ export default function LobbyScreen({ onNavigate }: LobbyScreenProps) {
               onPress={() => onNavigate('rules')}
               colors={colors}
               styles={styles}
+              playHaptic={playHaptic}
             />
 
             <MenuCard
@@ -104,6 +108,7 @@ export default function LobbyScreen({ onNavigate }: LobbyScreenProps) {
               onPress={() => onNavigate('achievements')}
               colors={colors}
               styles={styles}
+              playHaptic={playHaptic}
             />
 
             <MenuCard
@@ -113,6 +118,7 @@ export default function LobbyScreen({ onNavigate }: LobbyScreenProps) {
               onPress={() => onNavigate('settings')}
               colors={colors}
               styles={styles}
+              playHaptic={playHaptic}
             />
           </View>
 

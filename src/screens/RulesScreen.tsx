@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from '../utils/haptics';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +17,7 @@ import {
 } from '../assets/icons/icons';
 import { AppScreen } from '../types/game';
 import { useTheme } from '../theme/ThemeContext';
+import { useSettings } from '../theme/SettingsContext';
 
 type RulesScreenProps = {
   onNavigate: (screen: AppScreen) => void;
@@ -25,6 +25,7 @@ type RulesScreenProps = {
 
 export default function RulesScreen({ onNavigate }: RulesScreenProps) {
   const { colors, isDark } = useTheme();
+  const { playHaptic } = useSettings();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
   const [botName, setBotName] = useState('Saara');
 
@@ -69,7 +70,7 @@ export default function RulesScreen({ onNavigate }: RulesScreenProps) {
           <View style={styles.header}>
             <Pressable
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                playHaptic();
                 onNavigate('lobby');
               }}
               style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}

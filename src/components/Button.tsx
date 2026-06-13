@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
-import * as Haptics from '../utils/haptics';
+import { useSettings } from '../theme/SettingsContext';
 
 type ButtonProps = {
   children: React.ReactNode;
@@ -10,9 +10,11 @@ type ButtonProps = {
 };
 
 export default function Button({ children, onPress, style, haptic = true }: ButtonProps) {
+  const { playHaptic } = useSettings();
+
   const handlePress = () => {
     if (haptic) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      playHaptic();
     }
     onPress?.();
   };

@@ -1,4 +1,5 @@
-import * as Haptics from '../utils/haptics';
+import { useSettings } from '../theme/SettingsContext';
+import * as ExpoHaptics from 'expo-haptics';
 import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 import {
   LayoutAnimation,
@@ -74,11 +75,12 @@ type ModeCardProps = {
   onPress: () => void;
   r: ReturnType<typeof useResponsive>;
   colors: any;
+  playHaptic: (style?: ExpoHaptics.ImpactFeedbackStyle) => void;
 };
 
-function ModeCard({ title, subtitle, icon, isSelected, onPress, r, colors }: ModeCardProps) {
+function ModeCard({ title, subtitle, icon, isSelected, onPress, r, colors, playHaptic }: ModeCardProps) {
   const handlePress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    playHaptic(ExpoHaptics.ImpactFeedbackStyle.Medium);
     onPress();
   }, [onPress]);
 
@@ -175,9 +177,10 @@ type SegmentedControlProps = {
   onChange: (val: string) => void;
   r: ReturnType<typeof useResponsive>;
   colors: any;
+  playHaptic: (style?: ExpoHaptics.ImpactFeedbackStyle) => void;
 };
 
-function SegmentedControl({ options, value, onChange, r, colors }: SegmentedControlProps) {
+function SegmentedControl({ options, value, onChange, r, colors, playHaptic }: SegmentedControlProps) {
   // Normalize once — avoids repeated typeof checks per render
   const normalized = useMemo(() =>
     options.map(opt =>
@@ -186,7 +189,7 @@ function SegmentedControl({ options, value, onChange, r, colors }: SegmentedCont
 
   const handleChange = useCallback((val: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    playHaptic(ExpoHaptics.ImpactFeedbackStyle.Light);
     onChange(val);
   }, [onChange]);
 
@@ -247,9 +250,10 @@ type GameModeScreenProps = {
   onStartGame: (params: GameParams) => void;
 };
 
-export default function GameModeScreen({ onNavigate, onStartGame }: GameModeScreenProps) {
-  const r = useResponsive();
+export default function GameModeScreen({ onStartGame, onNavigate }: GameModeScreenProps) {
   const { colors } = useTheme();
+  const { playHaptic } = useSettings();
+  const r = useResponsive();
 
   const [boardSize, setBoardSize] = useState<BoardSize>('8x8');
   const [gameMode, setGameMode] = useState<GameMode>('vs-bot');
@@ -262,7 +266,7 @@ export default function GameModeScreen({ onNavigate, onStartGame }: GameModeScre
   }, []);
 
   const handleStartMatch = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    playHaptic(ExpoHaptics.ImpactFeedbackStyle.Heavy);
     onStartGame({ boardSize, gameMode, difficulty, timePerMove });
   }, [boardSize, gameMode, difficulty, timePerMove, onStartGame]);
 
@@ -293,7 +297,7 @@ export default function GameModeScreen({ onNavigate, onStartGame }: GameModeScre
             <View style={{ position: 'absolute', left: 0, zIndex: 10 }}>
               <Pressable
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  playHaptic(ExpoHaptics.ImpactFeedbackStyle.Light);
                   onNavigate('lobby');
                 }}
                 style={({ pressed }) => [{
@@ -339,6 +343,7 @@ export default function GameModeScreen({ onNavigate, onStartGame }: GameModeScre
               onPress={() => handleSetMode('two-player')}
               r={r}
               colors={colors}
+              playHaptic={playHaptic}
             />
             <ModeCard
               title="Player vs Bot"
@@ -348,6 +353,7 @@ export default function GameModeScreen({ onNavigate, onStartGame }: GameModeScre
               onPress={() => handleSetMode('vs-bot')}
               r={r}
               colors={colors}
+              playHaptic={playHaptic}
             />
           </View>
 
@@ -372,6 +378,7 @@ export default function GameModeScreen({ onNavigate, onStartGame }: GameModeScre
               onChange={(val) => setBoardSize(val as BoardSize)}
               r={r}
               colors={colors}
+              playHaptic={playHaptic}
             />
           </View>
 
@@ -387,6 +394,7 @@ export default function GameModeScreen({ onNavigate, onStartGame }: GameModeScre
                 onChange={(val) => setDifficulty(val as Difficulty)}
                 r={r}
                 colors={colors}
+                playHaptic={playHaptic}
               />
             </View>
           )}
@@ -402,6 +410,7 @@ export default function GameModeScreen({ onNavigate, onStartGame }: GameModeScre
               onChange={(val) => setTimePerMove(val as TimerOption)}
               r={r}
               colors={colors}
+              playHaptic={playHaptic}
             />
           </View>
 

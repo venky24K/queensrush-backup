@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Button from './Button';
 import { PlayFilledIcon, CloseIcon, FlagIcon } from '../assets/icons/icons';
-import * as Haptics from '../utils/haptics';
+import { useSettings } from '../theme/SettingsContext';
+import * as ExpoHaptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 
 type ModalProps = {
@@ -19,12 +20,13 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function Modal({ visible, type, title, subtitle, onConfirm, onCancel }: ModalProps) {
   const { colors, isDark } = useTheme();
+  const { playHaptic } = useSettings();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   if (!visible) return null;
 
   const handlePauseResume = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    playHaptic(ExpoHaptics.ImpactFeedbackStyle.Medium);
     onCancel?.();
   };
 
