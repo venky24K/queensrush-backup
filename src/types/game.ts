@@ -1,6 +1,6 @@
 import { BoardSize } from './board';
 
-export type AppScreen = 'lobby' | 'game-mode' | 'rules' | 'game' | 'settings' | 'achievements';
+export type AppScreen = 'splash' | 'lobby' | 'game-mode' | 'rules' | 'game' | 'settings' | 'achievements';
 
 export type GameMode = 'vs-bot' | 'two-player';
 

@@ -13,6 +13,7 @@ import RulesScreen from './screens/RulesScreen';
 import GameScene from './screens/GameScene';
 import SettingsScreen from './screens/SettingsScreen';
 import AchievementsScreen from './screens/AchievementsScreen';
+import SplashScreenComponent from './screens/SplashScreen';
 import ScreenTransition from './components/ScreenTransition';
 import { GameParams, AppScreen } from './types/game';
 import { ThemeProvider } from './theme/ThemeContext';
@@ -32,7 +33,7 @@ export default function App() {
     Inter_700Bold,
   });
 
-  const [currentScreen, setCurrentScreen] = useState<AppScreen>('lobby');
+  const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash');
   const [gameParams, setGameParams] = useState<GameParams>({
     boardSize: '8x8',
     gameMode: 'vs-bot',
@@ -80,6 +81,11 @@ export default function App() {
     <SettingsProvider>
       <ThemeProvider>
         <AchievementsProvider>
+        {currentScreen === 'splash' && (
+          <ScreenTransition key="splash">
+            <SplashScreenComponent onNavigate={handleNavigate} />
+          </ScreenTransition>
+        )}
         {currentScreen === 'lobby' && (
           <ScreenTransition key="lobby">
             <LobbyScreen onNavigate={handleNavigate} />
