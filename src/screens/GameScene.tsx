@@ -11,6 +11,7 @@ import { PauseIcon, HistoryIcon, TimerIcon } from '../assets/icons/icons';
 import { GameParams, TurnState, AppScreen } from '../types/game';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../theme/ThemeContext';
+import { useAchievements } from '../theme/AchievementsContext';
 
 // Main GameScene Screen Component
 type GameSceneProps = {
@@ -24,6 +25,8 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
   const turnStylesThemed = useMemo(() => createTurnStyles(colors), [colors]);
   const counterStylesThemed = useMemo(() => createCounterStyles(colors), [colors]);
   const timerStylesThemed = useMemo(() => createTimerStyles(colors), [colors]);
+  const { recordMatch } = useAchievements();
+  const [recordedGame, setRecordedGame] = useState(false);
 
   const [botName, setBotName] = useState('Saara');
 
@@ -45,14 +48,37 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
     isTimeout,
     currentTurnStr,
     handleCellPress,
-    handleReplay,
-    handleUndo,
+    handleReplay: originalHandleReplay,
+    handleUndo: originalHandleUndo,
   } = useGame({
     boardSize: gameParams.boardSize,
     gameMode: gameParams.gameMode,
     difficulty: gameParams.difficulty,
     timePerMove: gameParams.timePerMove,
   });
+
+  const wrappedHandleReplay = () => {
+    setRecordedGame(false);
+    originalHandleReplay();
+  };
+
+  const wrappedHandleUndo = () => {
+    if (gameState !== 'playing') {
+      setRecordedGame(false);
+    }
+    originalHandleUndo();
+  };
+
+  useEffect(() => {
+    if (gameState !== 'playing' && !recordedGame) {
+      if (gameState === 'p2_lost' || gameState === 'p1_lost') {
+        const won = (gameParams.gameMode === 'vs-bot' && gameState === 'p2_lost') ||
+                    (gameParams.gameMode === 'two-player' && gameState === 'p2_lost'); 
+        recordMatch(won, gameParams.gameMode, gameParams.difficulty, gameParams.timePerMove);
+      }
+      setRecordedGame(true);
+    }
+  }, [gameState, recordedGame, gameParams, recordMatch]);
 
   let overlayTitle = '';
   let overlaySubtitle = '';
@@ -127,7 +153,7 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
       opacity: isLowTime ? opacity.value : 1,
     }));
 
-    if (tl === null || mt === null) return null;
+    if (tl == null || mt == null || mt === 0) return null;
 
     return (
       <Animated.View style={[timerStylesThemed.container, isLowTime ? timerStylesThemed.lowTime : timerStylesThemed.normal, animatedStyle]}>
@@ -149,7 +175,7 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
           type="game-over"
           title={overlayTitle}
           subtitle={overlaySubtitle}
-          onConfirm={handleReplay}
+          onConfirm={wrappedHandleReplay}
           onCancel={() => onNavigate('lobby')}
         />
 
@@ -202,7 +228,7 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
             </Button>
 
             <Button
-              onPress={handleUndo}
+              onPress={wrappedHandleUndo}
               style={styles.circleBtn}
             >
               <HistoryIcon size={20} color={colors.textMuted} />

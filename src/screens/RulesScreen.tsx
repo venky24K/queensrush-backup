@@ -119,17 +119,17 @@ export default function RulesScreen({ onNavigate }: RulesScreenProps) {
             <RuleCard
               icon={<TrophyIcon size={20} color={colors.text} />}
               title="Winning the Match"
-              description="Force your opponent into making an invalid move, and the victory is yours. Great players don't just play for themselves — they manipulate the board to restrict their opponent's safe options."
+              description="You win if your opponent makes an invalid move, or if they run out of time. You can also win by exhausting the board of all safe squares — if this happens, the player with the most Queens on the board wins!"
             />
             <RuleCard
               icon={<NoEntryIcon size={20} color={colors.text} />}
               title="Losing the Match"
-              description="You lose if you place a Queen in a conflicting position — same row, column, or diagonal as any other Queen on the board. You also lose if your move timer runs out before you make a valid placement."
+              description="You lose instantly if you place a Queen in a conflicting position — sharing the same row, column, or diagonal as any other Queen. You also forfeit the match if your move timer hits zero."
             />
             <RuleCard
               icon={<DoubleCheckIcon size={20} color={colors.text} />}
-              title="A Drawn Game"
-              description="If a valid move is made that leaves the opponent with absolutely no safe squares to play on, the game ends in a Draw. Neither player wins — a rare and honourable outcome for two skilled opponents."
+              title="The Trapping Tie-Breaker"
+              description="If the board runs out of safe squares and both players have placed the exact same number of Queens, the victory goes to the player who made the final valid move to trap their opponent."
             />
           </View>
 

@@ -25,7 +25,7 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
   const [isPaused, setIsPaused] = useState(false);
   const [showResignConfirm, setShowResignConfirm] = useState(false);
 
-  const maxTime = TIMERS[timePerMove];
+  const maxTime = TIMERS[timePerMove] === 0 ? null : TIMERS[timePerMove];
   const [timeLeft, setTimeLeft] = useState<number | null>(maxTime);
 
   const quota = QUOTAS[boardSize];
@@ -59,10 +59,12 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
     const p1Count = newPlacedQueens.filter((q) => q.player === 1).length;
     const p2Count = newPlacedQueens.filter((q) => q.player === 2).length;
 
-    if (p1Count === quota && p2Count === quota) {
-      setGameState('draw');
-    } else if (!hasBoardValidMoves(newIndices)) {
-      setGameState('draw');
+    const isExhausted = (p1Count === quota && p2Count === quota) || !hasBoardValidMoves(newIndices);
+
+    if (isExhausted) {
+      if (p1Count > p2Count) setGameState('p2_lost');
+      else if (p2Count > p1Count) setGameState('p1_lost');
+      else setGameState(currentPlayer === 1 ? 'p2_lost' : 'p1_lost');
     } else {
       setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
     }
@@ -114,7 +116,7 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
       }
 
       if (botMove === -1) {
-        setGameState('draw');
+        setGameState('p1_lost');
       } else {
         const botQueen: PlacedQueen = { index: botMove, player: 2 };
         const newPlacedQueens: PlacedQueen[] = [...currentPlacedQueens, botQueen];
@@ -124,10 +126,12 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
         const p1Count = newPlacedQueens.filter((q) => q.player === 1).length;
         const p2Count = newPlacedQueens.filter((q) => q.player === 2).length;
 
-        if (p1Count === quota && p2Count === quota) {
-          setGameState('draw');
-        } else if (!hasBoardValidMoves(newIndices)) {
-          setGameState('draw');
+        const isExhausted = (p1Count === quota && p2Count === quota) || !hasBoardValidMoves(newIndices);
+
+        if (isExhausted) {
+          if (p1Count > p2Count) setGameState('p2_lost');
+          else if (p2Count > p1Count) setGameState('p1_lost');
+          else setGameState('p1_lost');
         } else {
           setCurrentPlayer(1);
         }

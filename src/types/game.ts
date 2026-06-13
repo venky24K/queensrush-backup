@@ -6,7 +6,7 @@ export type GameMode = 'vs-bot' | 'two-player';
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
-export type TimerOption = '15s' | '30s' | '60s' | 'None';
+export type TimerOption = '15s' | '30s' | '60s' | 'Off';
 
 export type GameState = 'playing' | 'draw' | 'p1_lost' | 'p2_lost';
 

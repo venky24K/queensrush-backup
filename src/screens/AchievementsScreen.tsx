@@ -12,6 +12,7 @@ import {
 import { AppScreen } from '../types/game';
 import { useTheme } from '../theme/ThemeContext';
 import { useSettings } from '../theme/SettingsContext';
+import { useAchievements, ComputedAchievement } from '../theme/AchievementsContext';
 
 type AchievementProps = {
   icon: React.ReactNode;
@@ -53,7 +54,16 @@ type AchievementsScreenProps = {
 export default function AchievementsScreen({ onNavigate }: AchievementsScreenProps) {
   const { colors, isDark } = useTheme();
   const { playHaptic } = useSettings();
+  const { achievements, unlockedCount, totalCount } = useAchievements();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+
+  const ICONS: Record<string, React.ReactNode> = {
+    'first_blood': <StarIcon size={24} color={colors.text} />,
+    'tactician': <MedalIcon size={24} color={colors.textMuted} />,
+    'grandmaster': <BotIcon size={24} color={colors.textMuted} />,
+    'speed_demon': <TimerIcon size={24} color={colors.textMuted} />,
+    'perfect_run': <TrophyIcon size={24} color={colors.textMuted} />,
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -77,12 +87,12 @@ export default function AchievementsScreen({ onNavigate }: AchievementsScreenPro
           {/* Stats Summary */}
           <View style={styles.statsCard}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>1</Text>
+              <Text style={styles.statValue}>{unlockedCount}</Text>
               <Text style={styles.statLabel}>UNLOCKED</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>12</Text>
+              <Text style={styles.statValue}>{totalCount}</Text>
               <Text style={styles.statLabel}>TOTAL</Text>
             </View>
           </View>
@@ -90,60 +100,19 @@ export default function AchievementsScreen({ onNavigate }: AchievementsScreenPro
           <Text style={styles.sectionHeader}>MASTERY MILESTONES</Text>
           
           <View style={styles.list}>
-            <AchievementCard
-              icon={<StarIcon size={24} color={colors.text} />}
-              title="First Blood"
-              description="Win your first match against any opponent."
-              progress={1}
-              total={1}
-              isUnlocked={true}
-              colors={colors}
-              styles={styles}
-            />
-            
-            <AchievementCard
-              icon={<MedalIcon size={24} color={colors.textMuted} />}
-              title="Tactician"
-              description="Win 10 matches on Medium difficulty or higher."
-              progress={3}
-              total={10}
-              isUnlocked={false}
-              colors={colors}
-              styles={styles}
-            />
-
-            <AchievementCard
-              icon={<BotIcon size={24} color={colors.textMuted} />}
-              title="Grandmaster"
-              description="Defeat the AI on Hard difficulty."
-              progress={0}
-              total={1}
-              isUnlocked={false}
-              colors={colors}
-              styles={styles}
-            />
-            
-            <AchievementCard
-              icon={<TimerIcon size={24} color={colors.textMuted} />}
-              title="Speed Demon"
-              description="Win a match with the 15s timer active."
-              progress={0}
-              total={1}
-              isUnlocked={false}
-              colors={colors}
-              styles={styles}
-            />
-            
-            <AchievementCard
-              icon={<TrophyIcon size={24} color={colors.textMuted} />}
-              title="Perfect Run"
-              description="Win 5 games in a row against the AI without losing."
-              progress={1}
-              total={5}
-              isUnlocked={false}
-              colors={colors}
-              styles={styles}
-            />
+            {achievements.map((ach: ComputedAchievement) => (
+              <AchievementCard
+                key={ach.id}
+                icon={ICONS[ach.id]}
+                title={ach.title}
+                description={ach.description}
+                progress={ach.progress}
+                total={ach.total}
+                isUnlocked={ach.isUnlocked}
+                colors={colors}
+                styles={styles}
+              />
+            ))}
           </View>
 
         </View>

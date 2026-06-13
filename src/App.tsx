@@ -17,6 +17,7 @@ import ScreenTransition from './components/ScreenTransition';
 import { GameParams, AppScreen } from './types/game';
 import { ThemeProvider } from './theme/ThemeContext';
 import { SettingsProvider } from './theme/SettingsContext';
+import { AchievementsProvider } from './theme/AchievementsContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -78,6 +79,7 @@ export default function App() {
   return (
     <SettingsProvider>
       <ThemeProvider>
+        <AchievementsProvider>
         {currentScreen === 'lobby' && (
           <ScreenTransition key="lobby">
             <LobbyScreen onNavigate={handleNavigate} />
@@ -109,6 +111,7 @@ export default function App() {
           </ScreenTransition>
         )}
         <StatusBar style="auto" />
+        </AchievementsProvider>
       </ThemeProvider>
     </SettingsProvider>
   );

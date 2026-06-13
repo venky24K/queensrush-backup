@@ -17,8 +17,12 @@ import { BoardSize } from '../types/board';
 import { Difficulty, GameMode, GameParams, TimerOption, AppScreen } from '../types/game';
 import { useTheme } from '../theme/ThemeContext';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
+try {
+  if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+} catch (e) {
+  // Ignore no-op errors in New Architecture
 }
 
 // ─── Responsive hook ──────────────────────────────────────────────────────────
@@ -337,7 +341,7 @@ export default function GameModeScreen({ onStartGame, onNavigate }: GameModeScre
           }}>
             <ModeCard
               title="Player vs Player"
-              subtitle="Challenge a friend locally or online."
+              subtitle="Challenge a friend locally."
               icon={<UsersIcon size={r.iconSize} color={gameMode === 'two-player' ? colors.background : colors.text} />}
               isSelected={gameMode === 'two-player'}
               onPress={() => handleSetMode('two-player')}
