@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
@@ -12,7 +12,7 @@ import { GameParams, TurnState, AppScreen } from '../types/game';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../theme/ThemeContext';
 import { useAchievements } from '../theme/AchievementsContext';
-import { useRewardedAd, TestIds } from 'react-native-google-mobile-ads';
+import { useRewardedAd, useInterstitialAd, TestIds } from 'react-native-google-mobile-ads';
 
 // Main GameScene Screen Component
 type GameSceneProps = {
@@ -26,7 +26,7 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
   const turnStylesThemed = useMemo(() => createTurnStyles(colors), [colors]);
   const counterStylesThemed = useMemo(() => createCounterStyles(colors), [colors]);
   const timerStylesThemed = useMemo(() => createTimerStyles(colors), [colors]);
-  const { recordMatch } = useAchievements();
+  const { recordMatch, state: achievementState, resetAdCounter } = useAchievements();
   const [recordedGame, setRecordedGame] = useState(false);
 
   const [botName, setBotName] = useState('Saara');
@@ -62,17 +62,28 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
 
   const adUnitId = __DEV__ ? TestIds.REWARDED : 'ca-app-pub-5818429762885270/3891217509';
   const { isLoaded, isEarnedReward, isClosed, load, show } = useRewardedAd(adUnitId, {
-    requestOptions: { requestNonPersonalizedAdsOnly: true },
-    loadOnDismissed: true,
+    requestNonPersonalizedAdsOnly: true,
+  });
+
+  const interstitialAdUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-5818429762885270/8768139663';
+  const { 
+    isLoaded: isInterstitialLoaded, 
+    isClosed: isInterstitialClosed, 
+    load: loadInterstitial, 
+    show: showInterstitial 
+  } = useInterstitialAd(interstitialAdUnitId, {
+    requestNonPersonalizedAdsOnly: true,
   });
 
   const [showAdConfirm, setShowAdConfirm] = useState(false);
   const [pendingAction, setPendingAction] = useState<'undo' | 'revive' | null>(null);
   const [hasDeclinedRevive, setHasDeclinedRevive] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<'lobby' | 'replay' | null>(null);
 
   useEffect(() => {
     load();
-  }, [load]);
+    loadInterstitial();
+  }, [load, loadInterstitial]);
 
   useEffect(() => {
     if (isEarnedReward && pendingAction) {
@@ -87,8 +98,32 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
   useEffect(() => {
     if (isClosed) {
       setPendingAction(null);
+      load(); // manually load next ad
     }
-  }, [isClosed]);
+  }, [isClosed, load]);
+
+  const wrappedHandleReplay = useCallback(() => {
+    setRecordedGame(false);
+    setHasDeclinedRevive(false);
+    originalHandleReplay();
+  }, [originalHandleReplay]);
+
+  const executeNavigation = useCallback((navTarget: 'lobby' | 'replay') => {
+    if (navTarget === 'lobby') {
+      onNavigate('lobby');
+    } else if (navTarget === 'replay') {
+      wrappedHandleReplay();
+    }
+  }, [onNavigate, wrappedHandleReplay]);
+
+  useEffect(() => {
+    if (isInterstitialClosed && pendingNavigation) {
+      resetAdCounter();
+      executeNavigation(pendingNavigation);
+      setPendingNavigation(null);
+      loadInterstitial();
+    }
+  }, [isInterstitialClosed, pendingNavigation, resetAdCounter, loadInterstitial, executeNavigation]);
 
   const handleWatchAd = (action: 'undo' | 'revive') => {
     if (isLoaded) {
@@ -99,10 +134,13 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
     }
   };
 
-  const wrappedHandleReplay = () => {
-    setRecordedGame(false);
-    setHasDeclinedRevive(false);
-    originalHandleReplay();
+  const handleInterceptNavigation = (navTarget: 'lobby' | 'replay') => {
+    if (achievementState.gamesPlayedSinceLastAd >= 3 && isInterstitialLoaded) {
+      setPendingNavigation(navTarget);
+      showInterstitial();
+    } else {
+      executeNavigation(navTarget);
+    }
   };
 
   const wrappedHandleUndo = () => {
@@ -237,8 +275,8 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
           type="game-over"
           title={overlayTitle}
           subtitle={overlaySubtitle}
-          onConfirm={wrappedHandleReplay}
-          onCancel={() => onNavigate('lobby')}
+          onConfirm={() => handleInterceptNavigation('replay')}
+          onCancel={() => handleInterceptNavigation('lobby')}
         />
 
         {/* Modal for Revive */}
@@ -264,7 +302,7 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
           visible={showResignConfirm}
           type="resign"
           subtitle="Are you sure you want to resign and return to the lobby? Your current progress will be lost."
-          onConfirm={() => onNavigate('lobby')}
+          onConfirm={() => handleInterceptNavigation('lobby')}
           onCancel={() => setShowResignConfirm(false)}
         />
 

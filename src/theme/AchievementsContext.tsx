@@ -11,6 +11,7 @@ export type AchievementState = {
   winsTimer15s: number;
   currentBotWinStreak: number;
   maxBotWinStreak: number;
+  gamesPlayedSinceLastAd: number;
 };
 
 const DEFAULT_STATE: AchievementState = {
@@ -20,6 +21,7 @@ const DEFAULT_STATE: AchievementState = {
   winsTimer15s: 0,
   currentBotWinStreak: 0,
   maxBotWinStreak: 0,
+  gamesPlayedSinceLastAd: 0,
 };
 
 export type ComputedAchievement = {
@@ -37,6 +39,7 @@ type AchievementsContextType = {
   unlockedCount: number;
   totalCount: number;
   recordMatch: (won: boolean, mode: GameMode, difficulty: Difficulty, timer: TimerOption) => Promise<void>;
+  resetAdCounter: () => Promise<void>;
 };
 
 const AchievementsContext = createContext<AchievementsContextType | null>(null);
@@ -68,6 +71,7 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
 
   const recordMatch = async (won: boolean, mode: GameMode, difficulty: Difficulty, timer: TimerOption) => {
     const newState = { ...state };
+    newState.gamesPlayedSinceLastAd += 1;
 
     if (won) {
       newState.totalWins += 1;
@@ -96,6 +100,11 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
       }
     }
 
+    await saveState(newState);
+  };
+
+  const resetAdCounter = async () => {
+    const newState = { ...state, gamesPlayedSinceLastAd: 0 };
     await saveState(newState);
   };
 
@@ -146,7 +155,7 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
   const totalCount = achievements.length;
 
   return (
-    <AchievementsContext.Provider value={{ state, achievements, unlockedCount, totalCount, recordMatch }}>
+    <AchievementsContext.Provider value={{ state, achievements, unlockedCount, totalCount, recordMatch, resetAdCounter }}>
       {children}
     </AchievementsContext.Provider>
   );
