@@ -24,6 +24,7 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
   const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(1);
   const [isPaused, setIsPaused] = useState(false);
   const [showResignConfirm, setShowResignConfirm] = useState(false);
+  const [freeUndosUsed, setFreeUndosUsed] = useState(0);
 
   const maxTime = TIMERS[timePerMove] === 0 ? null : TIMERS[timePerMove];
   const [timeLeft, setTimeLeft] = useState<number | null>(maxTime);
@@ -148,6 +149,7 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
     setCurrentPlayer(1);
     setIsPaused(false);
     setShowResignConfirm(false);
+    setFreeUndosUsed(0);
   };
 
   const handleUndo = () => {
@@ -194,6 +196,8 @@ export function useGame({ boardSize, gameMode, difficulty, timePerMove }: UseGam
     handleCellPress,
     handleReplay,
     handleUndo,
+    freeUndosUsed,
+    setFreeUndosUsed,
   };
 }
 export default useGame;

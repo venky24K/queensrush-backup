@@ -42,7 +42,8 @@
             "shrinkResourcesInReleaseBuilds": true
           }
         }
-      ]
+      ],
+      "react-native-google-mobile-ads"
     ],
     "experiments": {
       "reactCompiler": true
@@ -52,5 +53,9 @@
         "projectId": "3b16cc4f-d840-4346-a36c-97901434b128"
       }
     }
+  },
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-5818429762885270~9992420567",
+    "ios_app_id": "ca-app-pub-5818429762885270~9992420567"
   }
 }

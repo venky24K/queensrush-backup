@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
 import Board from '../components/Board';
@@ -12,6 +12,7 @@ import { GameParams, TurnState, AppScreen } from '../types/game';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../theme/ThemeContext';
 import { useAchievements } from '../theme/AchievementsContext';
+import { useRewardedAd, TestIds } from 'react-native-google-mobile-ads';
 
 // Main GameScene Screen Component
 type GameSceneProps = {
@@ -50,6 +51,8 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
     handleCellPress,
     handleReplay: originalHandleReplay,
     handleUndo: originalHandleUndo,
+    freeUndosUsed,
+    setFreeUndosUsed,
   } = useGame({
     boardSize: gameParams.boardSize,
     gameMode: gameParams.gameMode,
@@ -57,8 +60,48 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
     timePerMove: gameParams.timePerMove,
   });
 
+  const adUnitId = __DEV__ ? TestIds.REWARDED : 'ca-app-pub-5818429762885270/3891217509';
+  const { isLoaded, isEarnedReward, isClosed, load, show } = useRewardedAd(adUnitId, {
+    requestOptions: { requestNonPersonalizedAdsOnly: true },
+    loadOnDismissed: true,
+  });
+
+  const [showAdConfirm, setShowAdConfirm] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'undo' | 'revive' | null>(null);
+  const [hasDeclinedRevive, setHasDeclinedRevive] = useState(false);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (isEarnedReward && pendingAction) {
+      if (pendingAction === 'undo' || pendingAction === 'revive') {
+        if (pendingAction === 'undo') setShowAdConfirm(false);
+        originalHandleUndo();
+      }
+      setPendingAction(null);
+    }
+  }, [isEarnedReward, pendingAction, originalHandleUndo]);
+
+  useEffect(() => {
+    if (isClosed) {
+      setPendingAction(null);
+    }
+  }, [isClosed]);
+
+  const handleWatchAd = (action: 'undo' | 'revive') => {
+    if (isLoaded) {
+      setPendingAction(action);
+      show();
+    } else {
+      Alert.alert('Ad not ready', 'Please wait a moment for the ad to load and try again.');
+    }
+  };
+
   const wrappedHandleReplay = () => {
     setRecordedGame(false);
+    setHasDeclinedRevive(false);
     originalHandleReplay();
   };
 
@@ -66,7 +109,17 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
     if (gameState !== 'playing') {
       setRecordedGame(false);
     }
-    originalHandleUndo();
+    
+    if (gameParams.gameMode === 'vs-bot') {
+      if (freeUndosUsed < 1) {
+        setFreeUndosUsed((prev: number) => prev + 1);
+        originalHandleUndo();
+      } else {
+        setShowAdConfirm(true);
+      }
+    } else {
+      originalHandleUndo();
+    }
   };
 
   useEffect(() => {
@@ -101,6 +154,15 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
     overlayTitle = 'Draw!';
     overlaySubtitle = 'No valid moves left on the board.';
   }
+
+  const showReviveModal = 
+    gameParams.gameMode === 'vs-bot' && 
+    gameState === 'p1_lost' && 
+    !hasDeclinedRevive;
+
+  const showGameOverModal = 
+    gameState !== 'playing' && 
+    !showReviveModal;
 
   // Local UI subcomponents
   function ScreenTitle({ title }: { title: string }) {
@@ -171,12 +233,30 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
 
         {/* Modal for Game Over */}
         <Modal
-          visible={gameState !== 'playing'}
+          visible={showGameOverModal}
           type="game-over"
           title={overlayTitle}
           subtitle={overlaySubtitle}
           onConfirm={wrappedHandleReplay}
           onCancel={() => onNavigate('lobby')}
+        />
+
+        {/* Modal for Revive */}
+        <Modal
+          visible={showReviveModal}
+          type="revive"
+          subtitle="Watch a short video to undo your last move and keep playing!"
+          onConfirm={() => handleWatchAd('revive')}
+          onCancel={() => setHasDeclinedRevive(true)}
+        />
+
+        {/* Modal for Ad Confirm */}
+        <Modal
+          visible={showAdConfirm}
+          type="ad-confirm"
+          subtitle="Watch a short ad to undo your move?"
+          onConfirm={() => handleWatchAd('undo')}
+          onCancel={() => setShowAdConfirm(false)}
         />
 
         {/* Modal for Resign Confirmation */}

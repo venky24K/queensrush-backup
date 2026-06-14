@@ -9,7 +9,7 @@ import { useTheme } from '../theme/ThemeContext';
 
 type ModalProps = {
   visible: boolean;
-  type: 'pause' | 'resign' | 'game-over';
+  type: 'pause' | 'resign' | 'game-over' | 'ad-confirm' | 'revive';
   title?: string;
   subtitle?: string;
   onConfirm?: () => void; // Used for resign confirm or game over replay
@@ -55,13 +55,19 @@ export default function Modal({ visible, type, title, subtitle, onConfirm, onCan
           </View>
         )}
 
-        {type === 'resign' && (
+        {(type === 'resign' || type === 'revive') && (
           <View style={[styles.iconCircle, { backgroundColor: '#FEF2F2' }]}>
             <FlagIcon size={32} color="#EF4444" />
           </View>
         )}
 
-        <Text style={styles.title}>{title || (type === 'resign' ? 'RESIGN MATCH?' : '')}</Text>
+        {type === 'ad-confirm' && (
+          <View style={[styles.iconCircle, { backgroundColor: colors.secondary }]}>
+            <PlayFilledIcon size={32} color={colors.text} />
+          </View>
+        )}
+
+        <Text style={styles.title}>{title || (type === 'resign' ? 'RESIGN MATCH?' : type === 'revive' ? 'YOU LOST!' : type === 'ad-confirm' ? 'WATCH AD?' : '')}</Text>
         <Text style={styles.subtitle}>{subtitle}</Text>
 
         <View style={styles.buttons}>
@@ -83,6 +89,30 @@ export default function Modal({ visible, type, title, subtitle, onConfirm, onCan
               </Button>
               <Button onPress={onCancel} style={styles.cancelBtn}>
                 <Text style={styles.cancelBtnText}>CANCEL</Text>
+              </Button>
+            </>
+          )}
+
+          {type === 'ad-confirm' && (
+            <>
+              <Button onPress={onConfirm} style={[styles.primaryBtn, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }]}>
+                <PlayFilledIcon size={16} color={colors.background} />
+                <Text style={styles.primaryBtnText}>WATCH AD</Text>
+              </Button>
+              <Button onPress={onCancel} style={styles.cancelBtn}>
+                <Text style={styles.cancelBtnText}>CANCEL</Text>
+              </Button>
+            </>
+          )}
+
+          {type === 'revive' && (
+            <>
+              <Button onPress={onConfirm} style={[styles.primaryBtn, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }]}>
+                <PlayFilledIcon size={16} color={colors.background} />
+                <Text style={styles.primaryBtnText}>WATCH AD TO CONTINUE</Text>
+              </Button>
+              <Button onPress={onCancel} style={styles.cancelBtn}>
+                <Text style={styles.cancelBtnText}>QUIT</Text>
               </Button>
             </>
           )}
