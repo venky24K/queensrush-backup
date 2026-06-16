@@ -143,6 +143,14 @@ export default function GameScene({ gameParams, onNavigate }: GameSceneProps) {
     }
   };
 
+  useEffect(() => {
+    if (showAdConfirm) {
+      setIsPaused(true);
+    } else if (gameState === 'playing') {
+      setIsPaused(false);
+    }
+  }, [showAdConfirm, setIsPaused, gameState]);
+
   const wrappedHandleUndo = () => {
     if (gameState !== 'playing') {
       setRecordedGame(false);

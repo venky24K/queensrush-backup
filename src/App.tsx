@@ -19,6 +19,7 @@ import { GameParams, AppScreen } from './types/game';
 import { ThemeProvider } from './theme/ThemeContext';
 import { SettingsProvider } from './theme/SettingsContext';
 import { AchievementsProvider } from './theme/AchievementsContext';
+import mobileAds from 'react-native-google-mobile-ads';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -46,6 +47,10 @@ export default function App() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
+
+  useEffect(() => {
+    mobileAds().initialize();
+  }, []);
 
   useEffect(() => {
     const backAction = () => {
